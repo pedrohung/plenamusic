@@ -3,12 +3,16 @@ import { X, Play, Pause, Instagram, Youtube, Music2, Disc3, Plus } from "lucide-
 import { artists, stats, type Artist } from "@/data/artists";
 import { engine, type Layer } from "@/lib/audio";
 import { useEngine, useLevel } from "@/hooks/use-engine";
+import { geoMercator, geoPath } from "d3-geo";
+import { feature } from "topojson-client";
+import type { FeatureCollection, Geometry } from "geojson";
+import worldTopo from "world-atlas/countries-50m.json";
 
 const flagText = { amarillo: "text-flag-yellow", azul: "text-flag-blue", rojo: "text-flag-red" } as const;
 const flagBg = { amarillo: "bg-flag-yellow", azul: "bg-flag-blue", rojo: "bg-flag-red" } as const;
 
 export function Badge() {
-  return <span className="inline-block rounded-sm bg-destructive px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-destructive-foreground">Perfil de ejemplo — por confirmar</span>;
+  return <span className="inline-block w-fit self-start whitespace-nowrap rounded-sm bg-destructive px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-destructive-foreground">Perfil de ejemplo — por confirmar</span>;
 }
 
 function useReveal() {
@@ -22,61 +26,87 @@ function useReveal() {
 function Heading({ n, kicker, title }: { n: string; kicker: string; title: string }) {
   return (
     <div className="reveal mb-12">
-      <p className="font-classic text-sm italic text-gold">{n} — {kicker}</p>
+      <p className="text-sm text-gold">{n} — {kicker}</p>
       <h2 className="spray text-5xl leading-none md:text-8xl">{title}</h2>
     </div>
   );
 }
 
 /* ============ 2. EL VIAJE ============ */
-const px = (lon: number) => (lon + 90) * 10;
-const py = (lat: number) => (60 - lat) * 10;
+// Mapa real (world-atlas). Ecuador a la izquierda, Europa ampliada a la derecha, Atlántico en medio.
+const W = 1100, H = 720;
+const world = feature(worldTopo as never, (worldTopo as any).objects.countries) as unknown as FeatureCollection<Geometry>;
+const ecBox: [[number, number], [number, number]] = [[30, 300], [300, 640]];
+const euBox: [[number, number], [number, number]] = [[520, 40], [1080, 680]];
+const bbox = (x0: number, x1: number, y0: number, y1: number) => ({ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] } }) as any;
+const ecProj = geoMercator().fitExtent(ecBox, bbox(-81.5, -75, -5.2, 1.6));
+const euProj = geoMercator().fitExtent(euBox, bbox(-10.5, 13, 36, 53));
+const ecPath = geoPath(ecProj), euPath = geoPath(euProj);
+// desplazamiento de etiquetas para que no se solapen
+const LABEL: Record<string, [number, number, "start" | "end"]> = {
+  Madrid: [-14, 5, "end"], Barcelona: [14, 5, "start"], Valencia: [14, 0, "start"], Murcia: [14, 14, "start"],
+  Bilbao: [-14, -6, "end"], Milán: [14, 5, "start"], Londres: [-14, 5, "end"], París: [14, 5, "start"],
+};
+
+function RealMap({ sel, onSel }: { sel: Artist; onSel: (a: Artist) => void }) {
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Mapa de rutas de Ecuador a Europa">
+      <rect width={W} height={H} className="fill-flag-blue/10" />
+      <defs>
+        <clipPath id="ecClip"><rect x={ecBox[0][0] - 20} y={ecBox[0][1] - 20} width={310} height={380} rx={12} /></clipPath>
+        <clipPath id="euClip"><rect x={euBox[0][0] - 20} y={euBox[0][1] - 20} width={600} height={680} rx={12} /></clipPath>
+      </defs>
+      <g clipPath="url(#ecClip)">
+        {world.features.map((f, i) => <path key={i} d={ecPath(f) ?? ""} className={(f as any).id === "218" ? "fill-flag-yellow/35 stroke-flag-yellow" : "fill-card stroke-foreground/25"} strokeWidth={1} />)}
+      </g>
+      <g clipPath="url(#euClip)">
+        {world.features.map((f, i) => <path key={i} d={euPath(f) ?? ""} className={(f as any).id === "724" ? "fill-flag-yellow/25 stroke-flag-yellow/70" : "fill-card stroke-foreground/25"} strokeWidth={1} />)}
+      </g>
+      <text x={60} y={285} className="fill-flag-yellow font-spray" fontSize="34">ECUADOR</text>
+      <text x={760} y={36} className="fill-flag-yellow font-spray" fontSize="30">EUROPA</text>
+      <text x={330} y={200} className="fill-foreground/40" fontSize="18" letterSpacing="6">OCÉANO ATLÁNTICO</text>
+      {artists.map((a) => {
+        const [x1, y1] = ecProj([a.origin.lon, a.origin.lat])!; const [x2, y2] = euProj([a.destination.lon, a.destination.lat])!;
+        const active = sel.id === a.id;
+        const d = `M${x1},${y1} Q${(x1 + x2) / 2},${Math.min(y1, y2) - 220} ${x2},${y2}`;
+        const [dx, dy, anchor] = LABEL[a.destination.city] ?? [14, 5, "start"];
+        return (
+          <g key={a.id} className="cursor-pointer" onClick={() => onSel(a)}>
+            <path d={d} fill="none" strokeWidth={active ? 4 : 1.5} strokeDasharray={active ? undefined : "6 6"} className={active ? "stroke-flag-yellow" : "stroke-foreground/35"} style={{ transition: "all .5s" }} />
+            <path d={d} fill="none" strokeWidth={18} stroke="transparent" />
+            <circle cx={x2} cy={y2} r={active ? 11 : 7} className={active ? "fill-flag-yellow" : "fill-flag-red"} stroke="var(--stage)" strokeWidth={2} />
+            <text x={x2 + dx} y={y2 + dy} textAnchor={anchor} fontSize="17" fontWeight={700} className={active ? "fill-flag-yellow" : "fill-foreground"} paintOrder="stroke" stroke="var(--stage)" strokeWidth={4}>{a.destination.city}</text>
+          </g>
+        );
+      })}
+      {artists.map((a) => {
+        const [x, y] = ecProj([a.origin.lon, a.origin.lat])!;
+        return <circle key={"o" + a.id} cx={x} cy={y} r={sel.id === a.id ? 8 : 5} className="cursor-pointer fill-flag-blue stroke-foreground" strokeWidth="2" onClick={() => onSel(a)} />;
+      })}
+    </svg>
+  );
+}
 
 export function Viaje({ onOpen }: { onOpen: (a: Artist) => void }) {
   const [sel, setSel] = useState<Artist>(artists[0]!);
   return (
-    <section id="viaje" className="relative px-5 py-28 md:px-12">
+    <section id="viaje" className="relative px-5 pb-36 pt-28 md:px-12">
       <Heading n="02" kicker="De Ecuador a Europa" title="EL VIAJE" />
       <p className="reveal mb-10 max-w-2xl text-lg text-muted-foreground">
         La gente que cruza el océano buscando el triunfo. Cada línea es una ruta, cada punto una historia. La migración no es nuestro contexto: es nuestro relato.
       </p>
       <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
         <div className="reveal relative overflow-hidden rounded-lg border bg-card">
-          <svg viewBox="0 0 1100 720" className="h-auto w-full">
-            <defs>
-              <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" className="fill-foreground/15" /></pattern>
-            </defs>
-            <rect width="1100" height="720" fill="url(#dots)" />
-            <text x={px(-84)} y={py(-6)} className="fill-flag-yellow font-spray" fontSize="44">ECUADOR</text>
-            <text x={px(-12)} y={py(57)} className="fill-flag-yellow font-spray" fontSize="44">EUROPA</text>
-            <text x={px(-55)} y={py(24)} className="fill-foreground/30 font-classic" fontSize="22" fontStyle="italic">Océano Atlántico</text>
-            {artists.map((a) => {
-              const x1 = px(a.origin.lon), y1 = py(a.origin.lat), x2 = px(a.destination.lon), y2 = py(a.destination.lat);
-              const active = sel.id === a.id;
-              const d = `M${x1},${y1} Q${(x1 + x2) / 2},${Math.min(y1, y2) - 180} ${x2},${y2}`;
-              return (
-                <g key={a.id} className="cursor-pointer" onClick={() => setSel(a)}>
-                  <path d={d} fill="none" strokeWidth={active ? 4 : 1.5} strokeDasharray="1200" strokeDashoffset={active ? 0 : 0}
-                    className={active ? "stroke-flag-yellow" : "stroke-foreground/30"} style={{ transition: "all .5s" }} />
-                  <circle cx={x1} cy={y1 + a.id.charCodeAt(1) * 2 - 100} r={0} />
-                  <circle cx={x2} cy={y2} r={active ? 12 : 8} className={active ? "fill-flag-yellow" : "fill-flag-red"} />
-                  <text x={x2 + 14} y={y2 + 5} fontSize="18" className="fill-foreground">{a.destination.city}</text>
-                </g>
-              );
-            })}
-            {artists.map((a) => (
-              <circle key={"o" + a.id} cx={px(a.origin.lon)} cy={py(a.origin.lat)} r={7} className="cursor-pointer fill-flag-blue stroke-foreground" strokeWidth="2" onClick={() => setSel(a)} />
-            ))}
-          </svg>
+          <RealMap sel={sel} onSel={setSel} />
         </div>
         <article key={sel.id} className="reveal in flex flex-col gap-4 rounded-lg border bg-card p-6 animate-in fade-in slide-in-from-right-6 duration-500">
           <img src={sel.photo} alt={sel.name} loading="lazy" className="aspect-[4/3] w-full rounded object-cover" />
           <Badge />
           <h3 className="spray text-4xl">{sel.name}</h3>
-          <p className="font-classic text-xl italic">{sel.origin.city} → {sel.destination.city}</p>
+          <p className="text-xl">{sel.origin.city} → {sel.destination.city}</p>
           <p className="text-muted-foreground">{sel.story}</p>
           <div className="mt-auto flex flex-wrap gap-3">
-            <button onClick={() => engine.play()} className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">▶ Su canción</button>
+            <button onClick={() => engine.playTrack(sel.id, `Tema de ${sel.name}`, sel.style)} className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">▶ Su canción</button>
             <a href={sel.videoUrl} target="_blank" rel="noreferrer" className="rounded-full border px-5 py-2 text-sm">Ver vídeo</a>
             <button onClick={() => onOpen(sel)} className="rounded-full border px-5 py-2 text-sm">Ficha completa</button>
           </div>
@@ -91,14 +121,17 @@ export function Manifiesto() {
   return (
     <section id="manifiesto" className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden bg-stage px-5 py-28 grain md:px-12">
       <div className="absolute inset-x-0 top-0 h-2 flag-bar" />
-      <p className="reveal font-classic text-sm italic text-gold">03 — Manifiesto</p>
-      <h2 className="reveal spray text-[13vw] leading-[0.9] md:text-[9vw]">Entrar por<br />la bandera.</h2>
-      <h2 className="reveal font-classic text-[10vw] italic leading-[0.95] text-flag-blue md:text-[7vw]">Viajar con el viaje.</h2>
-      <h2 className="reveal spray text-[13vw] leading-[0.9] md:text-[9vw]" style={{ color: "var(--flag-red)" }}>Quedarse por<br />la música.</h2>
-      <div className="reveal mt-16 grid max-w-5xl gap-8 text-lg md:grid-cols-3">
-        <p><strong className="text-primary">Reunimos.</strong> A la mayor cantidad posible de cantantes urbanos ecuatorianos emergentes. No existe otro colectivo así en Europa.</p>
-        <p><strong className="text-primary">Impulsamos.</strong> Cada artista aporta todo su talento para que la música sea su medio de vida. Empezamos en España, llegamos a toda Europa.</p>
-        <p><strong className="text-primary">Devolvemos.</strong> Quien triunfa, abre la puerta al siguiente. Esa es la única regla.</p>
+      <p className="reveal text-sm text-gold">03 — Manifiesto</p>
+      <div className="reveal mt-4 flex gap-5 md:gap-8">
+        <div className="flex w-2 shrink-0 flex-col overflow-hidden rounded-full md:w-3"><span className="flex-[2] bg-flag-yellow" /><span className="flex-1 bg-flag-blue" /><span className="flex-1 bg-flag-red" /></div>
+        <h2 className="font-spray text-[9vw] leading-[1.05] text-foreground md:text-[6vw]">
+          Entrar por la bandera.<br /><span className="text-gold">Viajar con el viaje.</span><br />Quedarse por la música.
+        </h2>
+      </div>
+      <div className="reveal mt-16 grid max-w-6xl gap-10 text-xl font-medium leading-snug md:grid-cols-3 md:text-2xl">
+        <p><strong className="mb-2 block font-spray text-3xl font-normal text-primary md:text-4xl">Reunimos.</strong> A la mayor cantidad posible de cantantes urbanos ecuatorianos emergentes. No existe otro colectivo así en Europa.</p>
+        <p><strong className="mb-2 block font-spray text-3xl font-normal text-primary md:text-4xl">Impulsamos.</strong> Cada artista aporta todo su talento para que la música sea su medio de vida. Empezamos en España, llegamos a toda Europa.</p>
+        <p><strong className="mb-2 block font-spray text-3xl font-normal text-primary md:text-4xl">Devolvemos.</strong> Quien triunfa, abre la puerta al siguiente. Esa es la única regla.</p>
       </div>
     </section>
   );
@@ -111,31 +144,22 @@ export function Padrinos() {
     <section id="padrinos" className="px-5 py-28 md:px-12">
       <Heading n="04" kicker="Padrinos" title="PASA EL MICRÓFONO" />
       <p className="reveal mb-12 max-w-2xl text-lg text-muted-foreground">Cada artista consolidado apadrina públicamente a uno emergente: un feat, un teloneo, una colaboración. La cadena nunca se rompe.</p>
-      <div className="reveal flex snap-x gap-0 overflow-x-auto pb-6">
-        {chain.map((a) => {
-          const b = artists.find((x) => x.id === a.sponsors)!;
+      <ol className="reveal mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {artists.map((a, i) => {
+          const next = artists.find((x) => x.id === a.sponsors);
           return (
-            <div key={a.id} className="flex shrink-0 snap-start items-center">
-              <figure className="flex w-40 flex-col items-center gap-2 text-center">
-                <img src={a.photo} alt={a.name} loading="lazy" className={`h-28 w-28 rounded-full border-4 object-cover ${a.color === "amarillo" ? "border-flag-yellow" : a.color === "azul" ? "border-flag-blue" : "border-flag-red"}`} />
-                <figcaption className="font-bold">{a.name}</figcaption>
-              </figure>
-              <div className="flex w-36 flex-col items-center">
-                <span className="font-classic text-sm italic text-gold">apadrina a</span>
-                <div className="relative h-1 w-full flag-bar"><span className="absolute -right-1 -top-2 text-xl text-flag-red">🎤</span></div>
-                <span className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">feat · teloneo</span>
+            <li key={a.id} className="flex items-center gap-3 rounded-lg border bg-card p-3">
+              <span className="w-6 text-sm font-bold text-gold">{String(i + 1).padStart(2, "0")}</span>
+              <img src={a.photo} alt={a.name} loading="lazy" className={`h-14 w-14 shrink-0 rounded-full border-4 object-cover ${a.color === "amarillo" ? "border-flag-yellow" : a.color === "azul" ? "border-flag-blue" : "border-flag-red"}`} />
+              <div className="min-w-0">
+                <p className="truncate font-bold">{a.name}</p>
+                <p className="text-xs text-muted-foreground">{next ? <>apadrina a <span className="text-primary">{next.name}</span> ↓</> : "último relevo · ¿el siguiente eres tú?"}</p>
               </div>
-              {b.id === artists[artists.length - 1]?.id && (
-                <figure className="flex w-40 flex-col items-center gap-2 text-center">
-                  <img src={b.photo} alt={b.name} loading="lazy" className="h-28 w-28 rounded-full border-4 border-flag-blue object-cover" />
-                  <figcaption className="font-bold">{b.name}</figcaption>
-                </figure>
-              )}
-            </div>
+            </li>
           );
         })}
-      </div>
-      <p className="reveal font-classic text-2xl italic">«{chain[0]?.name} apadrina a {artists[1]?.name}, que apadrina a {artists[2]?.name}…» <span className="text-muted-foreground">— cadena de ejemplo</span></p>
+      </ol>
+      <p className="reveal text-xl md:text-2xl">«{chain.map((c) => c.name).join(" → ")} → {artists[artists.length - 1]?.name}» <span className="text-muted-foreground">— cadena de ejemplo</span></p>
     </section>
   );
 }
@@ -160,10 +184,12 @@ export function Volumen() {
           <ol className="divide-y border-y">
             {artists.map((a, i) => (
               <li key={a.id} className="flex items-center gap-4 py-3">
-                <span className="w-6 font-classic italic text-gold">{String(i + 1).padStart(2, "0")}</span>
+                <span className="w-6 text-gold">{String(i + 1).padStart(2, "0")}</span>
                 <img src={a.photo} alt="" loading="lazy" className="h-10 w-10 rounded object-cover" />
                 <div className="flex-1"><p className="font-bold">Tema de ejemplo {i + 1}</p><p className="text-xs text-muted-foreground">{a.name} · {a.style}</p></div>
-                <button onClick={() => engine.play()} aria-label="Reproducir" className="rounded-full border p-2 hover:bg-primary hover:text-primary-foreground"><Play className="h-4 w-4" /></button>
+                {(() => { const on = eng.playing && eng.track.id === a.id; return (
+                  <button onClick={() => engine.playTrack(a.id, `Tema de ejemplo ${i + 1}`, a.name)} aria-label={on ? "Pausar" : "Reproducir"} className={`rounded-full border p-2 hover:bg-primary hover:text-primary-foreground ${on ? "bg-primary text-primary-foreground" : ""}`}>{on ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+                ); })()}
               </li>
             ))}
           </ol>
@@ -173,9 +199,9 @@ export function Volumen() {
           <p className="mb-6 mt-2 text-muted-foreground">Mini-estudio: activa y combina loops. Tu mezcla suena en directo.</p>
           <div className="grid grid-cols-2 gap-3">
             {LOOPS.map((l) => {
-              const on = eng.layers.has(l.id);
+              const on = eng.studioMode && eng.layers.has(l.id);
               return (
-                <button key={l.id} onClick={() => { engine.setLayer(l.id, !on); if (!engine.playing) engine.play(); }}
+                <button key={l.id} onClick={() => engine.toggleStudio(l.id)}
                   className={`aspect-square rounded-lg p-4 text-left transition active:scale-95 ${on ? l.bg + " shadow-[var(--glow-yellow)]" : "border bg-card text-foreground opacity-60"}`}>
                   <span className="block font-spray text-2xl md:text-3xl">{l.label}</span>
                   <span className="text-xs">{l.desc}</span>
@@ -249,16 +275,16 @@ export function ArtistModal({ artist, onClose }: { artist: Artist | null; onClos
             <img src={a.photo} alt={a.name} className="h-72 w-full object-cover md:h-full" />
             <div className={`absolute inset-x-0 bottom-0 h-2 ${flagBg[a.color]}`} />
           </div>
-          <div className="flex flex-col gap-5 p-6 md:p-8">
+          <div className="flex min-w-0 flex-col gap-5 p-6 pr-14 md:p-8 md:pr-16">
             <Badge />
             <div>
               <h3 className="spray text-5xl">{a.name}</h3>
-              <p className="font-classic mt-1 text-xl italic">{a.phrase}</p>
+              <p className="mt-1 text-xl">{a.phrase}</p>
             </div>
             <p className="text-muted-foreground">{a.bio}</p>
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-gold">Trabajos más relevantes (ejemplo)</h4>
-              <ul className="divide-y border-y">{a.works.map((w) => <li key={w.title} className="flex justify-between py-2"><span>{w.title}</span><span className="font-classic italic text-muted-foreground">{w.year}</span></li>)}</ul>
+              <ul className="divide-y border-y">{a.works.map((w) => <li key={w.title} className="flex justify-between py-2"><span>{w.title}</span><span className="text-muted-foreground">{w.year}</span></li>)}</ul>
             </div>
             <div>
               <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">Escucha su historia</h4>
@@ -266,7 +292,7 @@ export function ArtistModal({ artist, onClose }: { artist: Artist | null; onClos
                 {a.timeline.map((t) => (
                   <li key={t.date} className="mb-4 ml-5">
                     <span className="absolute -left-[7px] mt-1.5 h-3 w-3 rounded-full bg-primary" />
-                    <p className="font-classic text-lg italic text-primary">{t.date}</p><p className="text-sm">{t.text}</p>
+                    <p className="text-lg text-primary">{t.date}</p><p className="text-sm">{t.text}</p>
                   </li>
                 ))}
               </ol>
@@ -291,19 +317,19 @@ export function Unete() {
       <Heading n="07" kicker="Clase La Plena 2027" title="ÚNETE" />
       <div className="grid gap-6 md:grid-cols-3">
         <div className="reveal rounded-lg border bg-card p-6">
-          <p className="font-classic italic text-gold">Clase anual</p>
+          <p className="text-gold">Clase anual</p>
           <h3 className="spray mt-1 text-3xl">Clase La Plena 2027</h3>
           <p className="mt-3 text-muted-foreground">Cada año presentamos una nueva promoción con un concierto de presentación en una sala de Madrid o Barcelona.</p>
         </div>
         <div className="reveal rounded-lg border bg-card p-6">
-          <p className="font-classic italic text-gold">Dos niveles</p>
+          <p className="text-gold">Dos niveles</p>
           <h3 className="spray mt-1 text-3xl">Colectivo · Rising</h3>
           <p className="mt-3 text-muted-foreground"><strong className="text-foreground">La Plena</strong>: el colectivo principal. <strong className="text-foreground">La Plena Rising</strong>: la cantera para artistas en una etapa aún más temprana.</p>
         </div>
         <div className="reveal flex flex-col items-center justify-center rounded-lg border bg-card p-6 text-center">
           <div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-gold bg-stage shadow-[var(--glow-yellow)]">
             <div className="absolute inset-2 rounded-full border border-dashed border-primary/60" />
-            <div><p className="font-spray text-2xl text-primary leading-none">LA PLENA</p><p className="font-classic text-xs italic text-gold">miembro · 2026</p></div>
+            <div><p className="font-spray text-2xl text-primary leading-none">LA PLENA</p><p className="text-xs text-gold">miembro · 2026</p></div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">Insignia oficial para tu perfil</p>
           <div className="mt-3 flex gap-6 text-center">
@@ -342,7 +368,7 @@ export function Player() {
       <div className="flex h-6 items-end gap-0.5">
         {bars.current.map((_, i) => <span key={i} className="w-1 rounded-full bg-primary" style={{ height: `${eng.playing ? 20 + level * 80 * (0.5 + Math.abs(Math.sin(i + performance.now() / 200))) : 15}%` }} />)}
       </div>
-      <div className="hidden min-w-0 sm:block"><p className="truncate text-xs font-bold">La Plena Vol. I</p><p className="truncate text-[10px] text-muted-foreground">Mezcla del colectivo</p></div>
+      <div className="hidden min-w-0 sm:block"><p className="truncate text-xs font-bold">{eng.track.title}</p><p className="truncate text-[10px] text-muted-foreground">{eng.track.sub}</p></div>
       <nav className="flex gap-1 overflow-x-auto text-[11px] uppercase tracking-wider md:ml-4">
         {links.map(([h, l]) => <a key={h} href={h} className="whitespace-nowrap rounded-full px-2 py-1 hover:bg-primary hover:text-primary-foreground">{l}</a>)}
       </nav>
