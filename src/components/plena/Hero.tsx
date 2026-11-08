@@ -11,7 +11,7 @@ const flagBg = { amarillo: "bg-flag-yellow", azul: "bg-flag-blue", rojo: "bg-fla
 function Wave({ level }: { level: number }) {
   const bars = 28;
   return (
-    <div className="flex h-1/2 w-full items-center justify-center gap-[3px] px-3">
+    <div className="flex h-full w-full items-center justify-center gap-[3px] px-3">
       {Array.from({ length: bars }).map((_, i) => {
         const base = Math.abs(Math.sin(i * 0.7 + performance.now() / 400));
         const h = 8 + (base * 30 + level * 70) * (1 - Math.abs(i - bars / 2) / bars);
@@ -65,7 +65,6 @@ export function Hero() {
   }, []);
 
   const pulse = 1 + level * 0.06;
-  const gap = (1 - p) * 6; // separación entre franjas
   const fuse = p; // 0 franjas → 1 collage
   const a = artists[idx] ?? artists[0]!;
 
