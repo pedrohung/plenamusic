@@ -9,6 +9,8 @@ class Engine {
   analyser: AnalyserNode | null = null;
   layers = new Set<Layer>(["dembow", "regueton", "quiteno", "bajo"]);
   playing = false;
+  studioMode = false;
+  track: { id: string | null; title: string; sub: string } = { id: null, title: "La Plena Vol. I", sub: "Mezcla del colectivo" };
   bpm = 96;
   step = 0;
   private nextTime = 0;
@@ -58,6 +60,18 @@ class Engine {
     this.emit();
   }
   setLayer(l: Layer, on: boolean) { on ? this.layers.add(l) : this.layers.delete(l); this.emit(); }
+  playTrack(id: string, title: string, sub: string) {
+    if (this.track.id === id && this.playing) { this.stop(); return; }
+    this.track = { id, title, sub };
+    this.studioMode = false;
+    this.layers = new Set(["dembow", "regueton", "quiteno", "bajo"]);
+    if (!this.playing) this.play(); else this.emit();
+  }
+  toggleStudio(l: Layer) {
+    if (!this.studioMode) { this.studioMode = true; this.layers = new Set(); this.track = { id: "studio", title: "Tu propia Plena", sub: "Mini-estudio" }; }
+    this.layers.has(l) ? this.layers.delete(l) : this.layers.add(l);
+    if (!this.playing) this.play(); else this.emit();
+  }
   setLayers(ls: Layer[]) { this.layers = new Set(ls); this.emit(); }
 
   private schedule() {
