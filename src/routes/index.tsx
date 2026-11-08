@@ -1,23 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useState } from "react";
+import { Hero } from "@/components/plena/Hero";
+import { Viaje, Manifiesto, Padrinos, Volumen, Elenco, ArtistModal, Unete, Player, useReveal } from "@/components/plena/Sections";
+import type { Artist } from "@/data/artists";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "La Plena Music — Colectivo urbano ecuatoriano en Europa" },
+      { name: "description", content: "Entrar por la bandera. Viajar con el viaje. Quedarse por la música. Cantantes urbanos ecuatorianos emergentes en España y Europa." },
+      { property: "og:title", content: "La Plena Music" },
+      { property: "og:description", content: "El primer colectivo de cantantes urbanos ecuatorianos emergentes en España y Europa." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [open, setOpen] = useState<Artist | null>(null);
+  const close = useCallback(() => setOpen(null), []);
+  useReveal();
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="pb-20">
+      <Hero />
+      <Viaje onOpen={setOpen} />
+      <Manifiesto />
+      <Padrinos />
+      <Volumen />
+      <Elenco onOpen={setOpen} />
+      <Unete />
+      <Player />
+      <ArtistModal artist={open} onClose={close} />
+    </main>
   );
 }
