@@ -22,7 +22,7 @@ function useReveal() {
 function Heading({ n, kicker, title }: { n: string; kicker: string; title: string }) {
   return (
     <div className="reveal mb-12">
-      <p className="font-classic text-sm italic text-gold">{n} — {kicker}</p>
+      <p className="text-sm text-gold">{n} — {kicker}</p>
       <h2 className="spray text-5xl leading-none md:text-8xl">{title}</h2>
     </div>
   );
@@ -49,7 +49,7 @@ export function Viaje({ onOpen }: { onOpen: (a: Artist) => void }) {
             <rect width="1100" height="720" fill="url(#dots)" />
             <text x={px(-84)} y={py(-6)} className="fill-flag-yellow font-spray" fontSize="44">ECUADOR</text>
             <text x={px(-12)} y={py(57)} className="fill-flag-yellow font-spray" fontSize="44">EUROPA</text>
-            <text x={px(-55)} y={py(24)} className="fill-foreground/30 font-classic" fontSize="22" fontStyle="italic">Océano Atlántico</text>
+            <text x={px(-55)} y={py(24)} className="fill-foreground/30 " fontSize="22">Océano Atlántico</text>
             {artists.map((a) => {
               const x1 = px(a.origin.lon), y1 = py(a.origin.lat), x2 = px(a.destination.lon), y2 = py(a.destination.lat);
               const active = sel.id === a.id;
@@ -73,7 +73,7 @@ export function Viaje({ onOpen }: { onOpen: (a: Artist) => void }) {
           <img src={sel.photo} alt={sel.name} loading="lazy" className="aspect-[4/3] w-full rounded object-cover" />
           <Badge />
           <h3 className="spray text-4xl">{sel.name}</h3>
-          <p className="font-classic text-xl italic">{sel.origin.city} → {sel.destination.city}</p>
+          <p className="text-xl">{sel.origin.city} → {sel.destination.city}</p>
           <p className="text-muted-foreground">{sel.story}</p>
           <div className="mt-auto flex flex-wrap gap-3">
             <button onClick={() => engine.play()} className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">▶ Su canción</button>
@@ -91,9 +91,9 @@ export function Manifiesto() {
   return (
     <section id="manifiesto" className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden bg-stage px-5 py-28 grain md:px-12">
       <div className="absolute inset-x-0 top-0 h-2 flag-bar" />
-      <p className="reveal font-classic text-sm italic text-gold">03 — Manifiesto</p>
+      <p className="reveal text-sm text-gold">03 — Manifiesto</p>
       <h2 className="reveal spray text-[13vw] leading-[0.9] md:text-[9vw]">Entrar por<br />la bandera.</h2>
-      <h2 className="reveal font-classic text-[10vw] italic leading-[0.95] text-flag-blue md:text-[7vw]">Viajar con el viaje.</h2>
+      <h2 className="reveal text-[10vw] leading-[0.95] text-flag-blue md:text-[7vw]">Viajar con el viaje.</h2>
       <h2 className="reveal spray text-[13vw] leading-[0.9] md:text-[9vw]" style={{ color: "var(--flag-red)" }}>Quedarse por<br />la música.</h2>
       <div className="reveal mt-16 grid max-w-5xl gap-8 text-lg md:grid-cols-3">
         <p><strong className="text-primary">Reunimos.</strong> A la mayor cantidad posible de cantantes urbanos ecuatorianos emergentes. No existe otro colectivo así en Europa.</p>
@@ -121,7 +121,7 @@ export function Padrinos() {
                 <figcaption className="font-bold">{a.name}</figcaption>
               </figure>
               <div className="flex w-36 flex-col items-center">
-                <span className="font-classic text-sm italic text-gold">apadrina a</span>
+                <span className="text-sm text-gold">apadrina a</span>
                 <div className="relative h-1 w-full flag-bar"><span className="absolute -right-1 -top-2 text-xl text-flag-red">🎤</span></div>
                 <span className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">feat · teloneo</span>
               </div>
@@ -135,7 +135,7 @@ export function Padrinos() {
           );
         })}
       </div>
-      <p className="reveal font-classic text-2xl italic">«{chain[0]?.name} apadrina a {artists[1]?.name}, que apadrina a {artists[2]?.name}…» <span className="text-muted-foreground">— cadena de ejemplo</span></p>
+      <p className="reveal text-2xl">«{chain[0]?.name} apadrina a {artists[1]?.name}, que apadrina a {artists[2]?.name}…» <span className="text-muted-foreground">— cadena de ejemplo</span></p>
     </section>
   );
 }
@@ -160,7 +160,7 @@ export function Volumen() {
           <ol className="divide-y border-y">
             {artists.map((a, i) => (
               <li key={a.id} className="flex items-center gap-4 py-3">
-                <span className="w-6 font-classic italic text-gold">{String(i + 1).padStart(2, "0")}</span>
+                <span className="w-6 text-gold">{String(i + 1).padStart(2, "0")}</span>
                 <img src={a.photo} alt="" loading="lazy" className="h-10 w-10 rounded object-cover" />
                 <div className="flex-1"><p className="font-bold">Tema de ejemplo {i + 1}</p><p className="text-xs text-muted-foreground">{a.name} · {a.style}</p></div>
                 <button onClick={() => engine.play()} aria-label="Reproducir" className="rounded-full border p-2 hover:bg-primary hover:text-primary-foreground"><Play className="h-4 w-4" /></button>
@@ -253,12 +253,12 @@ export function ArtistModal({ artist, onClose }: { artist: Artist | null; onClos
             <Badge />
             <div>
               <h3 className="spray text-5xl">{a.name}</h3>
-              <p className="font-classic mt-1 text-xl italic">{a.phrase}</p>
+              <p className="mt-1 text-xl">{a.phrase}</p>
             </div>
             <p className="text-muted-foreground">{a.bio}</p>
             <div>
               <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-gold">Trabajos más relevantes (ejemplo)</h4>
-              <ul className="divide-y border-y">{a.works.map((w) => <li key={w.title} className="flex justify-between py-2"><span>{w.title}</span><span className="font-classic italic text-muted-foreground">{w.year}</span></li>)}</ul>
+              <ul className="divide-y border-y">{a.works.map((w) => <li key={w.title} className="flex justify-between py-2"><span>{w.title}</span><span className="text-muted-foreground">{w.year}</span></li>)}</ul>
             </div>
             <div>
               <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">Escucha su historia</h4>
@@ -266,7 +266,7 @@ export function ArtistModal({ artist, onClose }: { artist: Artist | null; onClos
                 {a.timeline.map((t) => (
                   <li key={t.date} className="mb-4 ml-5">
                     <span className="absolute -left-[7px] mt-1.5 h-3 w-3 rounded-full bg-primary" />
-                    <p className="font-classic text-lg italic text-primary">{t.date}</p><p className="text-sm">{t.text}</p>
+                    <p className="text-lg text-primary">{t.date}</p><p className="text-sm">{t.text}</p>
                   </li>
                 ))}
               </ol>
@@ -291,19 +291,19 @@ export function Unete() {
       <Heading n="07" kicker="Clase La Plena 2027" title="ÚNETE" />
       <div className="grid gap-6 md:grid-cols-3">
         <div className="reveal rounded-lg border bg-card p-6">
-          <p className="font-classic italic text-gold">Clase anual</p>
+          <p className="text-gold">Clase anual</p>
           <h3 className="spray mt-1 text-3xl">Clase La Plena 2027</h3>
           <p className="mt-3 text-muted-foreground">Cada año presentamos una nueva promoción con un concierto de presentación en una sala de Madrid o Barcelona.</p>
         </div>
         <div className="reveal rounded-lg border bg-card p-6">
-          <p className="font-classic italic text-gold">Dos niveles</p>
+          <p className="text-gold">Dos niveles</p>
           <h3 className="spray mt-1 text-3xl">Colectivo · Rising</h3>
           <p className="mt-3 text-muted-foreground"><strong className="text-foreground">La Plena</strong>: el colectivo principal. <strong className="text-foreground">La Plena Rising</strong>: la cantera para artistas en una etapa aún más temprana.</p>
         </div>
         <div className="reveal flex flex-col items-center justify-center rounded-lg border bg-card p-6 text-center">
           <div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-gold bg-stage shadow-[var(--glow-yellow)]">
             <div className="absolute inset-2 rounded-full border border-dashed border-primary/60" />
-            <div><p className="font-spray text-2xl text-primary leading-none">LA PLENA</p><p className="font-classic text-xs italic text-gold">miembro · 2026</p></div>
+            <div><p className="font-spray text-2xl text-primary leading-none">LA PLENA</p><p className="text-xs text-gold">miembro · 2026</p></div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">Insignia oficial para tu perfil</p>
           <div className="mt-3 flex gap-6 text-center">

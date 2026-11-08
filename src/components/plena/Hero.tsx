@@ -87,9 +87,9 @@ export function Hero() {
 
         {/* Título */}
         <div className="absolute inset-x-0 top-[8vh] z-10 px-4 text-center" style={{ opacity: 0.8 + fuse * 0.2, transform: `translateY(${(1 - fuse) * -10}px)` }}>
-          <p className="font-classic text-xs uppercase italic tracking-[0.5em] text-foreground/80 md:text-sm">Colectivo urbano ecuatoriano · Europa</p>
+          <p className="text-xs uppercase tracking-[0.5em] text-foreground/80 md:text-sm">Colectivo urbano ecuatoriano · Europa</p>
           <h1 style={{ WebkitTextStroke: "2px var(--stage)" }} className="spray mt-2 text-[17vw] leading-[0.85] md:text-[11vw] animate-flicker">LA PLENA</h1>
-          <p className="font-classic text-3xl italic gold-text md:text-6xl">Music</p>
+          <p className="text-3xl gold-text md:text-6xl">Music</p>
         </div>
 
         {/* Controles */}
@@ -118,7 +118,7 @@ export function Hero() {
           <div className="absolute inset-x-0 bottom-32 px-6 text-center">
             <p className="text-xs uppercase tracking-[0.4em] text-foreground/70">Mini-mundo {a.id} / 0{artists.length}</p>
             <h2 key={a.name} className="spray text-6xl md:text-9xl animate-in slide-in-from-bottom-6 duration-500">{a.name}</h2>
-            <p className="font-classic mt-2 text-lg italic text-foreground md:text-2xl">{a.phrase}</p>
+            <p className="mt-2 text-lg text-foreground md:text-2xl">{a.phrase}</p>
             <span className="mt-3 inline-block rounded-sm bg-destructive px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-destructive-foreground">Perfil de ejemplo — por confirmar</span>
           </div>
         </div>

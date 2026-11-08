@@ -34,7 +34,7 @@
   --color-gold: var(--gold);
   --color-stage: var(--stage);
   --font-spray: "Rubik Spray Paint", system-ui;
-  --font-classic: "Bodoni Moda", serif;
+  --: "Bodoni Moda", serif;
   --font-sans: "Space Grotesk", system-ui, sans-serif;
 }
 
@@ -81,7 +81,7 @@
 }
 
 @utility font-spray { font-family: var(--font-spray); }
-@utility font-classic { font-family: var(--font-classic); }
+@utility { font-family: var(--); }
 
 /* Texto de grafiti amarillo con efecto spray */
 @utility spray {
