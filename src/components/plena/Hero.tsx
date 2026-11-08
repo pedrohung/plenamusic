@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
 import singer from "@/assets/hero-singer.jpg";
 import condor from "@/assets/hero-condor.jpg";
+import disco from "@/assets/hero-disco.jpg";
 import { artists } from "@/data/artists";
 import { useEngine, useLevel } from "@/hooks/use-engine";
 
@@ -42,8 +43,16 @@ export function Hero() {
   // Mantén pulsado: viaja entre artistas
   useEffect(() => {
     if (!holding) return;
+    setIdx((i) => (i + 1) % artists.length);
     const t = setInterval(() => setIdx((i) => (i + 1) % artists.length), 900);
     return () => clearInterval(t);
+  }, [holding]);
+
+  useEffect(() => {
+    if (!holding) return;
+    const up = () => setHolding(false);
+    window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up); window.addEventListener("blur", up);
+    return () => { window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); window.removeEventListener("blur", up); };
   }, [holding]);
 
   useEffect(() => {
@@ -63,33 +72,31 @@ export function Hero() {
   return (
     <section ref={ref} className="relative h-[220vh] bg-stage" aria-label="Portada">
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden grain select-none">
-        {/* Franjas */}
-        <div className="absolute inset-0 flex" style={{ gap: `${gap}px`, transform: `scale(${pulse})`, transition: "transform 90ms" }}>
-          <div className="relative overflow-hidden bg-flag-yellow" style={{ flex: 2 - fuse * 0.6 }}>
-            <img src={singer} alt="Cantante urbano en escena" width={768} height={1344} className="absolute inset-0 h-full w-full object-cover mix-blend-multiply" style={{ transform: `translateX(${fuse * 10}%) scale(${1 + fuse * 0.2})` }} />
+        {/* Franjas fundidas en un collage */}
+        <div className="absolute inset-0" style={{ transform: `scale(${pulse})`, transition: "transform 90ms" }}>
+          <div className="absolute inset-y-0 left-0 overflow-hidden bg-flag-yellow" style={{ width: `${56 + fuse * 4}%`, WebkitMaskImage: "linear-gradient(90deg,#000 80%,transparent)", maskImage: "linear-gradient(90deg,#000 80%,transparent)" }}>
+            <img src={singer} alt="Cantante urbano en escena" width={768} height={1344} className="absolute inset-0 h-full w-full object-cover mix-blend-multiply" style={{ transform: `translateX(${fuse * 6}%) scale(${1 + fuse * 0.15})` }} />
             <div className="absolute left-0 top-0 h-[120%] w-1/3 origin-top animate-beam bg-gradient-to-b from-foreground/40 to-transparent blur-2xl" />
           </div>
-          <div className="relative flex items-center overflow-hidden bg-flag-blue" style={{ flex: 1 + fuse * 0.2 }}>
-            <Wave level={level} />
+          <div className="seam-fade absolute inset-y-0 overflow-hidden bg-flag-blue" style={{ left: "38%", width: "40%" }}>
+            <img src={disco} alt="Gente bailando en una discoteca" width={768} height={1344} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-flag-blue/35 mix-blend-color" />
+            <div className="absolute inset-x-0 bottom-0 h-1/4 opacity-70"><Wave level={level} /></div>
           </div>
-          <div className="relative overflow-hidden bg-flag-red" style={{ flex: 1 - fuse * 0.3 }}>
-            <img src={condor} alt="Volcán y cóndor andino" width={768} height={1344} className="absolute inset-0 h-full w-full object-cover mix-blend-screen" style={{ transform: `translateX(${-fuse * 20}%) scale(${1 + fuse * 0.3})` }} />
+          <div className="absolute inset-y-0 right-0 overflow-hidden bg-flag-red" style={{ width: "34%", WebkitMaskImage: "linear-gradient(270deg,#000 75%,transparent)", maskImage: "linear-gradient(270deg,#000 75%,transparent)" }}>
+            <img src={condor} alt="Volcán y cóndor andino" width={768} height={1344} className="absolute inset-0 h-full w-full object-cover" style={{ transform: `translateX(${-fuse * 8}%) scale(${1 + fuse * 0.15})` }} />
+            <div className="absolute inset-0 bg-flag-red/30 mix-blend-multiply" />
           </div>
-        </div>
-
-        {/* Collage final: las escenas se funden */}
-        <div className="pointer-events-none absolute inset-0" style={{ opacity: fuse }}>
-          <img src={condor} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-screen" />
-          <img src={singer} alt="" className="absolute inset-0 h-full w-full object-cover object-top opacity-60 mix-blend-lighten" />
-          <div className="absolute inset-0 bg-gradient-to-t from-stage via-stage/40 to-transparent" />
+          {/* capa de color que une las tres escenas */}
+          <div className="absolute inset-0 mix-blend-soft-light" style={{ background: "linear-gradient(90deg, var(--flag-yellow), var(--flag-blue) 55%, var(--flag-red))", opacity: 0.35 + fuse * 0.3 }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-stage via-transparent to-stage/50" />
         </div>
         <div className="pointer-events-none absolute inset-0 smoke" />
 
         {/* Título */}
         <div className="absolute inset-x-0 top-[8vh] z-10 px-4 text-center" style={{ opacity: 0.8 + fuse * 0.2, transform: `translateY(${(1 - fuse) * -10}px)` }}>
           <p className="text-xs uppercase tracking-[0.5em] text-foreground/80 md:text-sm">Colectivo urbano ecuatoriano · Europa</p>
-          <h1 style={{ WebkitTextStroke: "2px var(--stage)" }} className="spray mt-2 text-[17vw] leading-[0.85] md:text-[11vw] animate-flicker">LA PLENA</h1>
-          <p className="text-3xl gold-text md:text-6xl">Music</p>
+          <h1 style={{ WebkitTextStroke: "2px var(--stage)", transform: `scale(${1 + level * 0.12})`, transition: "transform 80ms" }} className="spray mt-2 text-[14vw] leading-[0.85] md:text-[9vw]">LA PLENA<br />MUSIC</h1>
         </div>
 
         {/* Controles */}
@@ -101,9 +108,14 @@ export function Hero() {
           </button>
           <button
             onPointerDown={(e) => { e.preventDefault(); setHolding(true); }}
-            onPointerUp={() => setHolding(false)} onPointerLeave={() => setHolding(false)} onPointerCancel={() => setHolding(false)}
             onContextMenu={(e) => e.preventDefault()}
-            className="touch-none rounded-full border border-foreground/40 bg-stage/60 px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground backdrop-blur transition active:scale-95">
+            className="relative touch-none rounded-full border border-foreground/40 bg-stage/60 px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground backdrop-blur transition active:scale-95">
+            {holding && (
+              <svg key={idx} className="absolute -left-12 top-1/2 h-10 w-10 -translate-y-1/2 -rotate-90" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="16" fill="none" strokeWidth="4" className="stroke-foreground/20" />
+                <circle cx="20" cy="20" r="16" fill="none" strokeWidth="4" strokeLinecap="round" className="stroke-primary" strokeDasharray="100.5" style={{ animation: "ring 900ms linear forwards" }} />
+              </svg>
+            )}
             Mantén pulsado para descubrir <span className="hidden md:inline">· o la barra espaciadora</span>
           </button>
           <p className="text-[10px] uppercase tracking-[0.4em] text-foreground/50">Desliza · las franjas se funden</p>
@@ -111,7 +123,7 @@ export function Hero() {
 
         {/* Mini-mundo del artista al mantener pulsado */}
         <div className={`absolute inset-0 z-30 transition-opacity duration-300 ${holding ? "opacity-100" : "pointer-events-none opacity-0"}`}
-          onPointerUp={() => setHolding(false)}>
+>
           <div className={`absolute inset-0 ${flagBg[a.color]}`} />
           <img key={a.id} src={a.photo} alt={a.name} className="absolute inset-0 h-full w-full object-cover mix-blend-multiply animate-in fade-in zoom-in-110 duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-stage via-transparent to-stage/60" />
