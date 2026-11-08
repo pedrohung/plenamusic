@@ -58,7 +58,7 @@ export function Hero() {
   const pulse = 1 + level * 0.06;
   const gap = (1 - p) * 6; // separación entre franjas
   const fuse = p; // 0 franjas → 1 collage
-  const a = artists[idx];
+  const a = artists[idx] ?? artists[0]!;
 
   return (
     <section ref={ref} className="relative h-[220vh] bg-stage" aria-label="Portada">
