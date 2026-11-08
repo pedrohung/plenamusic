@@ -86,14 +86,14 @@ export function Hero() {
         <div className="pointer-events-none absolute inset-0 smoke" />
 
         {/* Título */}
-        <div className="absolute inset-x-0 top-[8vh] z-10 px-4 text-center" style={{ opacity: 0.35 + fuse * 0.65, transform: `translateY(${(1 - fuse) * -10}px)` }}>
+        <div className="absolute inset-x-0 top-[8vh] z-10 px-4 text-center" style={{ opacity: 0.8 + fuse * 0.2, transform: `translateY(${(1 - fuse) * -10}px)` }}>
           <p className="font-classic text-xs uppercase italic tracking-[0.5em] text-foreground/80 md:text-sm">Colectivo urbano ecuatoriano · Europa</p>
-          <h1 className="spray mt-2 text-[17vw] leading-[0.85] md:text-[11vw] animate-flicker">LA PLENA</h1>
+          <h1 style={{ WebkitTextStroke: "2px var(--stage)" }} className="spray mt-2 text-[17vw] leading-[0.85] md:text-[11vw] animate-flicker">LA PLENA</h1>
           <p className="font-classic text-3xl italic gold-text md:text-6xl">Music</p>
         </div>
 
         {/* Controles */}
-        <div className="absolute inset-x-0 bottom-8 z-20 flex flex-col items-center gap-4 px-4">
+        <div className="absolute inset-x-0 bottom-24 z-20 flex flex-col items-center gap-4 px-4">
           <button onClick={() => eng.toggle()} aria-label={eng.playing ? "Pausar" : "Reproducir"}
             className="group flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--glow-yellow)] transition hover:scale-110"
             style={{ transform: `scale(${1 + level * 0.3})` }}>
