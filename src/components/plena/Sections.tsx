@@ -33,7 +33,7 @@ const px = (lon: number) => (lon + 90) * 10;
 const py = (lat: number) => (60 - lat) * 10;
 
 export function Viaje({ onOpen }: { onOpen: (a: Artist) => void }) {
-  const [sel, setSel] = useState<Artist>(artists[0]);
+  const [sel, setSel] = useState<Artist>(artists[0]!);
   return (
     <section id="viaje" className="relative px-5 py-28 md:px-12">
       <Heading n="02" kicker="De Ecuador a Europa" title="EL VIAJE" />
@@ -125,7 +125,7 @@ export function Padrinos() {
                 <div className="relative h-1 w-full flag-bar"><span className="absolute -right-1 -top-2 text-xl text-flag-red">🎤</span></div>
                 <span className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">feat · teloneo</span>
               </div>
-              {b.id === artists[artists.length - 1].id && (
+              {b.id === artists[artists.length - 1]?.id && (
                 <figure className="flex w-40 flex-col items-center gap-2 text-center">
                   <img src={b.photo} alt={b.name} loading="lazy" className="h-28 w-28 rounded-full border-4 border-flag-blue object-cover" />
                   <figcaption className="font-bold">{b.name}</figcaption>
@@ -135,7 +135,7 @@ export function Padrinos() {
           );
         })}
       </div>
-      <p className="reveal font-classic text-2xl italic">«{chain[0].name} apadrina a {artists[1].name}, que apadrina a {artists[2].name}…» <span className="text-muted-foreground">— cadena de ejemplo</span></p>
+      <p className="reveal font-classic text-2xl italic">«{chain[0]?.name} apadrina a {artists[1]?.name}, que apadrina a {artists[2]?.name}…» <span className="text-muted-foreground">— cadena de ejemplo</span></p>
     </section>
   );
 }

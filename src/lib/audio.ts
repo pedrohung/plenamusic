@@ -35,7 +35,7 @@ class Engine {
     if (!this.analyser || !this.playing) return 0;
     this.analyser.getByteFrequencyData(this.data);
     let s = 0;
-    for (let i = 0; i < 12; i++) s += this.data[i];
+    for (let i = 0; i < 12; i++) s += this.data[i] ?? 0;
     return s / (12 * 255);
   }
   spectrum() {
@@ -90,8 +90,8 @@ class Engine {
       // pentatónica andina (La menor)
       const scale = [440, 523.25, 587.33, 659.25, 783.99, 880];
       const pat = [0, -1, 2, -1, 3, 2, -1, 1, 4, -1, 3, 2, -1, 0, 1, -1];
-      const p = pat[st];
-      if (p >= 0) this.pluck(t, scale[(p + (s >= 16 ? 1 : 0)) % scale.length]);
+      const p = pat[st] ?? -1;
+      if (p >= 0) this.pluck(t, scale[(p + (s >= 16 ? 1 : 0)) % scale.length] ?? 440);
     }
   }
 
